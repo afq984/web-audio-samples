@@ -16,8 +16,8 @@ const CACHE_URLS = [
   // to serve them when offline.
   'https://fonts.googleapis.com/css?family=Roboto:300,400,500',
   'https://fonts.googleapis.com/icon?family=Material+Icons',
-  'https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css',
-  'https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js',
+  'https://cdn.jsdelivr.net/npm/material-components-web@latest/dist/material-components-web.min.css',
+  'https://cdn.jsdelivr.net/npm/material-components-web@latest/dist/material-components-web.min.js',
 ];
 
 self.addEventListener('install', (e) => {
