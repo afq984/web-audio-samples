@@ -68,9 +68,9 @@ function finalizeClip({clipContainer, blob, id, storage}) {
  * @return {Promise<MediaStream>|null} Promise with MediaStream or
  *   null on error.
  */
-async function getAudioStream(audio) {
+async function getAudioStream() {
   try {
-    return await navigator.mediaDevices.getUserMedia({audio});
+    return await navigator.mediaDevices.getUserMedia({audio: true});
   } catch (e) {
     console.error(e);
     return null;
@@ -82,58 +82,43 @@ async function getAudioStream(audio) {
  * waveform.
  */
 async function startRecording({storage}) {
-  const doTrack = async (audio) => {
-    const chunks = [];
-    const stream = await getAudioStream(audio);
-    if (!stream) {
-      return; // Permissions have not been granted or an error occurred.
-    }
+  const chunks = [];
+  const stream = await getAudioStream();
+  if (!stream) {
+    return; // Permissions have not been granted or an error occurred.
+  }
 
-    const clipContainer = insertClip();
-    const canvas = clipContainer.querySelector('canvas');
-    canvas.width = clipContainer.offsetWidth;
+  const clipContainer = insertClip();
+  const canvas = clipContainer.querySelector('canvas');
+  canvas.width = clipContainer.offsetWidth;
 
-    const outlineIndicator = new visualize.OutlineLoudnessIndicator(
-        recordOutlineEl);
-    const waveformIndicator = new visualize.WaveformIndicator(canvas);
+  const outlineIndicator = new visualize.OutlineLoudnessIndicator(
+      recordOutlineEl);
+  const waveformIndicator = new visualize.WaveformIndicator(canvas);
 
-    // Start recording the microphone's audio stream in-memory.
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = ({data}) => {
-      chunks.push(data);
-    };
-    mediaRecorder.onstop = async () => {
-      outlineIndicator.hide();
-      recordButton.onclick = () => startRecording({storage});
-      const blob = new Blob(chunks, {type: mediaRecorder.mimeType});
-      const id = await storage.save(blob);
-      finalizeClip({clipContainer, id, blob, storage});
-    };
-    mediaRecorder.start();
-
-    visualizeRecording({stream, outlineIndicator, waveformIndicator});
-
-    return stream;
+  // Start recording the microphone's audio stream in-memory.
+  const mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = ({data}) => {
+    chunks.push(data);
   };
-
-  const stream1 = await doTrack(true);
-  const stream2 = await doTrack({
-    autoGainControl: false,
-    echoCancellation: false,
-    noiseSuppression: false,
-  });
+  mediaRecorder.onstop = async () => {
+    outlineIndicator.hide();
+    recordButton.onclick = () => startRecording({storage});
+    const blob = new Blob(chunks, {type: mediaRecorder.mimeType});
+    const id = await storage.save(blob);
+    finalizeClip({clipContainer, id, blob, storage});
+  };
+  mediaRecorder.start();
 
   recordButton.onclick = () => {
     // Stop the audio track to remove the browser's recording indicator and
     // stop the MediaRecorder.
-    stream1.getTracks().forEach((track) => {
-      track.stop();
-    });
-    stream2.getTracks().forEach((track) => {
+    stream.getTracks().forEach((track) => {
       track.stop();
     });
   };
 
+  visualizeRecording({stream, outlineIndicator, waveformIndicator});
 }
 
 /** Visualizes the audio with a waveform and a loudness indicator. */
